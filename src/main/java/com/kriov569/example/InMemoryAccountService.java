@@ -1,33 +1,41 @@
 package com.kriov569.example;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-@Service
 public class InMemoryAccountService implements AccountService {
-
     private final PhoneToAccountResolver phoneToAccountResolver;
+    private final AccountDao accountDao;
+    private final BlocklistResolver blocklistResolver;
 
-
-    @Autowired
-    public InMemoryAccountService(PhoneToAccountResolver phoneToAccountResolver) {
+    public InMemoryAccountService(PhoneToAccountResolver phoneToAccountResolver, AccountDao accountDao, BlocklistResolver blocklistResolver) {
         this.phoneToAccountResolver = phoneToAccountResolver;
+        this.accountDao = accountDao;
+        this.blocklistResolver = blocklistResolver;
     }
 
     @Override
-    public void transfer(Account from, Account to, long amount) {
-        if (from.getAmount() < amount) {
-            throw new IllegalStateException("Not enough money on account: " + from);
+    public void transfer(long fromId, long toId, long amount) {
+        requireNotBlocked(fromId, toId);
+        var accountFrom = accountDao.getAccount(fromId);
+        var accountTo = accountDao.getAccount(toId);
+        if (accountFrom.getAmount() < amount) {
+            throw new IllegalStateException("Not enough money on account: " + fromId);
         }
-        from.setAmount(from.getAmount() - amount);
-        to.setAmount(to.getAmount() + amount);
+        accountDao.setAmount(fromId, accountFrom.getAmount() - amount);
+        accountDao.setAmount(toId, accountTo.getAmount() + amount);
+    }
+
+    void requireNotBlocked(long... accountIds) {
+        for (long accountId : accountIds) {
+            if (blocklistResolver.isBlocklisted(accountId)) {
+                throw new IllegalStateException("Account is blocked: " + accountId);
+            }
+        }
     }
 
     @Override
-    public void transferByPhoneNumber(Account from, String phoneNumber, long amount) {
+    public void transferByPhoneNumber(long fromId, String phoneNumber, long amount) {
         var to = phoneToAccountResolver.findAccountByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found by phone: " + phoneNumber));
 
-        transfer(from, to, amount);
+        transfer(fromId, to.getId(), amount);
     }
 }

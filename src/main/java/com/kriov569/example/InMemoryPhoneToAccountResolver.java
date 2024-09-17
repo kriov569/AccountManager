@@ -1,18 +1,17 @@
 package com.kriov569.example;
 
-import org.springframework.stereotype.Service;
-
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class InMemoryPhoneToAccountResolver implements PhoneToAccountResolver {
     private final Map<String, Account> phoneToAccountMapping;
 
-    public InMemoryPhoneToAccountResolver(Map<String, Account> phoneToAccountMapping) {
-        this.phoneToAccountMapping = phoneToAccountMapping;
+    public InMemoryPhoneToAccountResolver() {
+        this.phoneToAccountMapping = new HashMap<>();
     }
-
 
     @Override
     public Optional<Account> findAccountByPhoneNumber(String phoneNumber) {

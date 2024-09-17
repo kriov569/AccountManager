@@ -2,6 +2,7 @@ package com.kriov569.example;
 
 public interface AccountService {
 
-    void transfer(Account from, Account to, long amount);
-    void transferByPhoneNumber(Account form, String phoneNumber, long amount);
+    void transfer(long from, long to, long amount);
+    void transferByPhoneNumber(long from, String phoneNumber, long amount);
+
 }
